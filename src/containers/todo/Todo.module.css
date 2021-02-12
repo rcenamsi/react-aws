@@ -1,0 +1,15 @@
+.todo_list {
+
+}
+
+.new_todo {
+    margin-top: 10px;
+}
+
+.todo_list button:hover,
+.todo_list button:active,
+.todo_list button.active
+{
+    background-color: dimgrey;
+    color: #fff;
+}
