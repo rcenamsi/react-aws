@@ -1,58 +1,67 @@
-import React, {Component} from 'react';
-import Base from "../../hoc/Base";
-import classes from './Todo.module.css';
-import {Container, Row, Col, Modal, ListGroup, Button} from "react-bootstrap";
+import React, { useState, useEffect } from 'react';
+import Base from '../../hoc/Base';
+import { API } from 'aws-amplify';
+import { listTodos } from '../../graphql/queries';
+import { createTodo as createTodoMutation, deleteTodo as deleteTodoMutation } from '../../graphql/mutations';
 
-class Todo extends Component {
 
-    state = {
-        isActive: false,
-        isCreateNew: false
+const initialFormState = { name: '', description: '' };
+
+function  Todo() {
+
+    const [todos, setTodos] = useState([]);
+    const [formData, setFormData] = useState(initialFormState);
+
+    useEffect(() => {
+        fetchTodos();
+    }, []);
+
+    async function fetchTodos() {
+        const apiData = await API.graphql({query: listTodos});
+        setTodos(apiData.data.listTodos.items);
     }
 
-    componentDidMount() {
+    async function createTodo() {
+        if (!formData.name || !formData.description) return;
+        await API.graphql({query: createTodoMutation, variables: { input: formData}});
+        setTodos([...todos, formData]);
+        setFormData(initialFormState);
+    }
+
+    async function deleteTodo({id}) {
+        const newTodoArray = todos.filter(todo => todo.id !== id);
+        setTodos(newTodoArray);
+        await API.graphql({query: deleteTodoMutation, variables: { input: id}});
     }
 
 
-    render() {
-        let listGroup = <ListGroup className={classes.todo_list}>
-            <ListGroup.Item action>Item 1</ListGroup.Item>
-            <ListGroup.Item action>Item 2</ListGroup.Item>
-            <ListGroup.Item action>Item 3</ListGroup.Item>
-            <ListGroup.Item action>Item 4</ListGroup.Item>
-        </ListGroup>;
-
-        let newTodo = <Modal
-            show={this.state.isCreateNew}
-            backdrop={'static'}
-            keyboard={false}
-        >
-            <Modal.Header closeButton>
-                <Modal.Title>Modal Title</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                I will not close this
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant={'secondary'} onClick={() => this.setState({isCreateNew: false})}>Close</Button>
-                <Button variant={'primary'}>Ok</Button>
-            </Modal.Footer>
-        </Modal>;
-
-
-        return <Base>
-            <Container fluid>
-                <Row>
-                    <Col>
-                        {newTodo}
-                        {listGroup}
-                        <Button variant={'primary'} className={classes.new_todo}
-                                onClick={() => this.setState({isCreateNew: true})}>New</Button>
-                    </Col>
-                </Row>
-            </Container>
-        </Base>
-    }
+    return <Base>
+    <div>
+        <h2>My Todo</h2>
+        <input
+            onChange={e => setFormData({...formData, 'name': e.target.value})}
+            placeholder="Todo Name"
+            value={formData.name}
+        />
+        <input
+            onChange={e => setFormData({...formData, 'description': e.target.value})}
+            placeholder="Todo Description"
+            value={formData.description}
+        />
+        <button onClick={createTodo}>Create</button>
+        <div style={{ marginBottom: 30}}>
+            {
+                todos.map(todo => (
+                    <div key={todo.id || todo.name}>
+                        <h2>{todo.name}</h2>
+                        <p>{todo.description}</p>
+                        <button onClick={() => deleteTodo(todo)}>Delete</button>
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+    </Base>
 }
 
 export default Todo;
