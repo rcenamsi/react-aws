@@ -24,6 +24,6 @@
 
 @media (min-width: 499px) {
     .desktop_only {
-        display: unset;
+        display: inline-flex;
     }
 }

@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import classes from './Layout.module.css';
 import Base from "../Base";
 import {ToolBar} from "../../components/navigations/toolbar/ToolBar";
-import {SideDrawer} from "../../components/navigations/Drawer/SideDrawer";
 
 class Layout extends Component {
 
@@ -10,10 +9,13 @@ class Layout extends Component {
         showSideDrawer: true
     };
 
+    sideDrawerHandler = (e) => {
+
+    }
+
     render() {
         return <Base>
             <ToolBar/>
-            <SideDrawer/>
             <main className={classes.layout_content}>{this.props.children}</main>
         </Base>;
     }

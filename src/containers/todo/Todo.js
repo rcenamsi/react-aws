@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Base from '../../hoc/Base';
+import classes from './Todo.module.css';
+import { Container, Row, Col, Card, Form, ListGroup, Image, ButtonGroup, Button, FormControl, InputGroup, Toast } from 'react-bootstrap';
+import { Notification } from '../../components/ui/notification/Notification';
 import { API, Storage } from 'aws-amplify';
 import { listTodos } from '../../graphql/queries';
 import { createTodo as createTodoMutation, deleteTodo as deleteTodoMutation } from '../../graphql/mutations';
@@ -7,10 +10,11 @@ import { createTodo as createTodoMutation, deleteTodo as deleteTodoMutation } fr
 
 const initialFormState = { name: '', description: '', image: '' };
 
-function  Todo() {
+function Todo() {
 
     const [todos, setTodos] = useState([]);
     const [formData, setFormData] = useState(initialFormState);
+    const [show, setShow] = useState(false);
 
     useEffect(() => {
         fetchTodos();
@@ -27,6 +31,7 @@ function  Todo() {
             return todo;
         }))
         setTodos(apiData.data.listTodos.items);
+        
     }
 
     async function createTodo() {
@@ -37,13 +42,14 @@ function  Todo() {
             formData.image = image;
         }
         setTodos([...todos, formData]);
+        setShow(true);
         setFormData(initialFormState);
     }
 
     async function deleteTodo({id}) {
         const newTodoArray = todos.filter(todo => todo.id !== id);
         setTodos(newTodoArray);
-        await API.graphql({query: deleteTodoMutation, variables: { input: id}});
+        await API.graphql({query: deleteTodoMutation, variables: { input: {id} }});
     }
 
     async function onChange(e) {
@@ -54,39 +60,61 @@ function  Todo() {
         fetchTodos();
     }
 
-
     return <Base>
     <div>
-        <h2>My Todo</h2>
-        <input
-            onChange={e => setFormData({...formData, 'name': e.target.value})}
-            placeholder="Todo Name"
-            value={formData.name}
-        />
-        <input
-            onChange={e => setFormData({...formData, 'description': e.target.value})}
-            placeholder="Todo Description"
-            value={formData.description}
-        />
-        <input
-            type="file"
-            onChange={onChange}
-        />
-        <button onClick={createTodo}>Create</button>
-        <div style={{ marginBottom: 30}}>
-            {
-                todos.map(todo => (
-                    <div key={todo.id || todo.name}>
-                        <h2>{todo.name}</h2>
-                        <p>{todo.description}</p>
-                        <button onClick={() => deleteTodo(todo)}>Delete</button>
-                        {
-                            todo.image && <img src={todo.image} style={{ width: 400 }} alt={'quality-assurance'}/>
-                        }
-                    </div>
-                ))
-            }
-        </div>
+        {
+            show ? <Notification show={show}/> : null
+        }
+        <h4>My Todo</h4>
+        <Card style={{ marginBottom: 15, padding: 25}}>
+            <InputGroup className={classes.pb_10}>
+                <FormControl 
+                onChange={e => setFormData({...formData, 'name': e.target.value})}
+                value={formData.name}
+                placeholder={'Name'} 
+                aria-label={'name'} />
+            </InputGroup>
+            <InputGroup className={classes.pb_10}>
+                <FormControl 
+                onChange={e => setFormData({...formData, 'description': e.target.value})}
+                value={formData.description}
+                placeholder={'Description'} 
+                aria-label={'description'} />
+            </InputGroup>
+            <InputGroup className={classes.pb_10}>
+                <FormControl 
+                    type={'file'}
+                    onChange={onChange}
+                />
+            </InputGroup>
+            <InputGroup className={classes.pt_15}>
+                <Button onClick={createTodo}>Create</Button>
+            </InputGroup>
+        </Card>
+        <Card style={{width: '100%'}}>
+            <Card.Header>Todo List</Card.Header>
+            <ListGroup varian={'flush'}>
+                {
+                    todos.map(todo => (
+                        <ListGroup.Item key={todo.id || todo.name} style={{display: 'inline-flex'}}>
+                            {
+                                todo.image && <Image src={todo.image} alt={'list-images'} roundedCircle width={120}  heigth={'100%'}/>
+                            }
+                            <div className={!todo.image ? classes.todo_details : ''}>
+                                <h3>{todo.name}</h3>
+                                <p>{todo.description}</p>
+                            </div>
+                            <ButtonGroup style={{position: 'absolute', right: 5}}>
+                                <Button>Edit</Button>
+                                <Button style={{marginLeft: 10}} onClick={() => deleteTodo(todo)}>Delete</Button>
+                            </ButtonGroup>
+                        </ListGroup.Item>
+                    ))
+
+                }
+            </ListGroup>
+        </Card>
+  
     </div>
     </Base>
 }

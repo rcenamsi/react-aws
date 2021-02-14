@@ -15,7 +15,7 @@ class App extends Component {
                 <Redirect to={'/'}/>
             </Switch>
         );
-        return <Layout>{routes}</Layout>
+        return <Layout className={classes.app}>{routes}</Layout>
     }
 }
 
